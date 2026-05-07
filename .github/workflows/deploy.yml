@@ -3,12 +3,16 @@ name: Deploy
 # Push to dev → staging deploy. Push to main → production deploy.
 # Manual workflow_dispatch with environment selector also supported.
 #
-# Worker secrets (JWT_SIGNING_SECRET, BACKEND_SHARED_SECRET) are pushed via
-# wrangler-action's `secrets:` input — the action calls
-# `wrangler secret put NAME --env <env>` for each name listed, reading the
-# value from the corresponding env var on the runner. This means we never
-# commit secrets and never have to manually `wrangler secret put` per
-# environment after the first time.
+# Two-step deploy per environment:
+#   1. `wrangler deploy --env <env>`        creates the Worker on first run,
+#                                           updates its code on subsequent runs
+#   2. `wrangler secret put ... --env <env>` pushes secrets onto the existing
+#                                            Worker (idempotent — no-op if value
+#                                            unchanged, rotation if changed)
+#
+# Note: cloudflare/wrangler-action@v3 uploads `secrets:` BEFORE running its
+# `command:`, which fails on first-ever deploy because the Worker doesn't
+# exist yet. So we don't use its `secrets:` input; we run wrangler directly.
 #
 # Required GitHub Actions repository secrets:
 #   IMAGES_API_TOKEN              — Cloudflare API token (Workers + R2 scopes)
@@ -73,33 +77,46 @@ jobs:
             echo "env=staging" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Deploy to staging
+      # ---- STAGING ----------------------------------------------------------
+
+      - name: Deploy Worker code (staging)
         if: steps.target.outputs.env == 'staging'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.IMAGES_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # Each name listed here is pushed via `wrangler secret put NAME
-          # --env staging`, reading the value from the env var of the same
-          # name on the runner.
-          secrets: |
-            JWT_SIGNING_SECRET
-            BACKEND_SHARED_SECRET
           command: deploy --env staging
+
+      - name: Push secrets (staging)
+        if: steps.target.outputs.env == 'staging'
+        # `echo -n` avoids a trailing newline ending up in the secret value.
+        # The local wrangler from `npm ci` is used (npx resolves to it).
+        run: |
+          echo -n "$JWT_SIGNING_SECRET" | npx wrangler secret put JWT_SIGNING_SECRET --env staging
+          echo -n "$BACKEND_SHARED_SECRET" | npx wrangler secret put BACKEND_SHARED_SECRET --env staging
         env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.IMAGES_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           JWT_SIGNING_SECRET: ${{ secrets.JWT_SIGNING_SECRET_STAGING }}
           BACKEND_SHARED_SECRET: ${{ secrets.BACKEND_SHARED_SECRET_STAGING }}
 
-      - name: Deploy to production
+      # ---- PRODUCTION -------------------------------------------------------
+
+      - name: Deploy Worker code (production)
         if: steps.target.outputs.env == 'production'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.IMAGES_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          secrets: |
-            JWT_SIGNING_SECRET
-            BACKEND_SHARED_SECRET
           command: deploy --env production
+
+      - name: Push secrets (production)
+        if: steps.target.outputs.env == 'production'
+        run: |
+          echo -n "$JWT_SIGNING_SECRET" | npx wrangler secret put JWT_SIGNING_SECRET --env production
+          echo -n "$BACKEND_SHARED_SECRET" | npx wrangler secret put BACKEND_SHARED_SECRET --env production
         env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.IMAGES_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           JWT_SIGNING_SECRET: ${{ secrets.JWT_SIGNING_SECRET_PROD }}
           BACKEND_SHARED_SECRET: ${{ secrets.BACKEND_SHARED_SECRET_PROD }}
