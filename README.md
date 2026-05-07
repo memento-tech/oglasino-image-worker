@@ -131,7 +131,7 @@ Cloudflare (CI pushes them automatically; locally you'd run
 
 | Name | Purpose |
 |---|---|
-| `IMAGES_API_TOKEN` | Cloudflare API token (Workers Scripts:Edit + R2 Storage:Edit + Workers Routes:Edit) |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare API token (Workers Scripts:Edit + R2 Storage:Edit + Workers Routes:Edit) |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID |
 | `JWT_SIGNING_SECRET_STAGING` | HS256 secret for staging Worker (matches backend's staging secret) |
 | `JWT_SIGNING_SECRET_PROD` | HS256 secret for production Worker |
