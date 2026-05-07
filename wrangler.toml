@@ -1,0 +1,71 @@
+# Top-level config doubles as the staging defaults: `wrangler deploy` with no
+# --env flag deploys to the staging Worker, never production. This is a
+# safety property — the only way to ship to production is `wrangler deploy
+# --env production` (or merging to main, which the deploy workflow handles).
+#
+# Routes (cdn.oglasino.com / cdn-staging.oglasino.com) are configured via
+# Cloudflare Dashboard → Workers & Pages → [worker] → Triggers → Custom
+# Domains, NOT in this file.
+#
+# Secrets (JWT_SIGNING_SECRET, JWT_SIGNING_SECRET_PREVIOUS,
+# BACKEND_SHARED_SECRET) are pushed by the deploy workflow via
+# `wrangler secret put`. They are NEVER stored here. For local `wrangler
+# dev`, place them in `.dev.vars` (gitignored).
+
+name = "oglasino-images-staging"
+main = "src/index.ts"
+compatibility_date = "2025-09-06"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ALLOWED_ORIGINS = "https://oglasino.com,https://www.oglasino.com,https://oglasino-web.vercel.app,http://localhost:3000,http://localhost:3001"
+ALLOWED_CONTENT_TYPES = "image/jpeg,image/png,image/webp,image/heic,image/heif"
+MAX_UPLOAD_BYTES = "10485760"
+UPLOAD_TOKEN_TTL_MS = "600000"
+VIEW_TOKEN_TTL_MS = "14400000"
+ENVIRONMENT = "staging"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "oglasino-images-staging"
+
+# ---------------------------------------------------------------------------
+# Staging — explicit, identical to default. Allows `wrangler deploy --env
+# staging` for symmetry with `--env production` and with the npm scripts.
+# Wrangler does not inherit complex types (vars, bindings) into env blocks,
+# so they must be repeated here.
+# ---------------------------------------------------------------------------
+
+[env.staging]
+name = "oglasino-images-staging"
+
+[env.staging.vars]
+ALLOWED_ORIGINS = "https://oglasino.com,https://www.oglasino.com,https://oglasino-web.vercel.app,http://localhost:3000,http://localhost:3001"
+ALLOWED_CONTENT_TYPES = "image/jpeg,image/png,image/webp,image/heic,image/heif"
+MAX_UPLOAD_BYTES = "10485760"
+UPLOAD_TOKEN_TTL_MS = "600000"
+VIEW_TOKEN_TTL_MS = "14400000"
+ENVIRONMENT = "staging"
+
+[[env.staging.r2_buckets]]
+binding = "BUCKET"
+bucket_name = "oglasino-images-staging"
+
+# ---------------------------------------------------------------------------
+# Production — tighter CORS (no localhost), production R2 bucket.
+# ---------------------------------------------------------------------------
+
+[env.production]
+name = "oglasino-images"
+
+[env.production.vars]
+ALLOWED_ORIGINS = "https://oglasino.com,https://www.oglasino.com,https://oglasino-web.vercel.app"
+ALLOWED_CONTENT_TYPES = "image/jpeg,image/png,image/webp,image/heic,image/heif"
+MAX_UPLOAD_BYTES = "10485760"
+UPLOAD_TOKEN_TTL_MS = "600000"
+VIEW_TOKEN_TTL_MS = "14400000"
+ENVIRONMENT = "production"
+
+[[env.production.r2_buckets]]
+binding = "BUCKET"
+bucket_name = "oglasino-images-prod"

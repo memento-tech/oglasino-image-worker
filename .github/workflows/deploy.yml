@@ -1,0 +1,105 @@
+name: Deploy
+
+# Push to dev → staging deploy. Push to main → production deploy.
+# Manual workflow_dispatch with environment selector also supported.
+#
+# Worker secrets (JWT_SIGNING_SECRET, BACKEND_SHARED_SECRET) are pushed via
+# wrangler-action's `secrets:` input — the action calls
+# `wrangler secret put NAME --env <env>` for each name listed, reading the
+# value from the corresponding env var on the runner. This means we never
+# commit secrets and never have to manually `wrangler secret put` per
+# environment after the first time.
+#
+# Required GitHub Actions repository secrets:
+#   IMAGES_API_TOKEN              — Cloudflare API token (Workers + R2 scopes)
+#   CLOUDFLARE_ACCOUNT_ID         — Cloudflare account ID
+#   JWT_SIGNING_SECRET_STAGING    — staging Worker's JWT secret (matches backend)
+#   JWT_SIGNING_SECRET_PROD       — production Worker's JWT secret
+#   BACKEND_SHARED_SECRET_STAGING — staging X-Backend-Auth secret
+#   BACKEND_SHARED_SECRET_PROD    — production X-Backend-Auth secret
+
+on:
+  push:
+    branches: [main, dev]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to deploy
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+
+concurrency:
+  group: deploy-${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging') }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy Worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    environment:
+      name: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging') }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Resolve target
+        id: target
+        run: |
+          if [ -n "${{ github.event.inputs.environment }}" ]; then
+            echo "env=${{ github.event.inputs.environment }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "env=production" >> "$GITHUB_OUTPUT"
+          else
+            echo "env=staging" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy to staging
+        if: steps.target.outputs.env == 'staging'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.IMAGES_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # Each name listed here is pushed via `wrangler secret put NAME
+          # --env staging`, reading the value from the env var of the same
+          # name on the runner.
+          secrets: |
+            JWT_SIGNING_SECRET
+            BACKEND_SHARED_SECRET
+          command: deploy --env staging
+        env:
+          JWT_SIGNING_SECRET: ${{ secrets.JWT_SIGNING_SECRET_STAGING }}
+          BACKEND_SHARED_SECRET: ${{ secrets.BACKEND_SHARED_SECRET_STAGING }}
+
+      - name: Deploy to production
+        if: steps.target.outputs.env == 'production'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.IMAGES_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          secrets: |
+            JWT_SIGNING_SECRET
+            BACKEND_SHARED_SECRET
+          command: deploy --env production
+        env:
+          JWT_SIGNING_SECRET: ${{ secrets.JWT_SIGNING_SECRET_PROD }}
+          BACKEND_SHARED_SECRET: ${{ secrets.BACKEND_SHARED_SECRET_PROD }}
