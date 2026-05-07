@@ -28,7 +28,7 @@ buckets. See contract §4 and §13.4.
 ## Local development
 
 ### Prerequisites
-- Node 20+
+- Node 22+ (wrangler v4 requires it)
 - `npm install` once
 - A Cloudflare account with `wrangler login` complete (only needed for deploys
   or for `wrangler dev --remote`; pure local dev works without it)
