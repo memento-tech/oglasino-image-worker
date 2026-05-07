@@ -15,7 +15,7 @@ name: Deploy
 # exist yet. So we don't use its `secrets:` input; we run wrangler directly.
 #
 # Required GitHub Actions repository secrets:
-#   IMAGES_API_TOKEN              — Cloudflare API token (Workers + R2 scopes)
+#   CLOUDFLARE_API_TOKEN              — Cloudflare API token (Workers + R2 scopes)
 #   CLOUDFLARE_ACCOUNT_ID         — Cloudflare account ID
 #   JWT_SIGNING_SECRET_STAGING    — staging Worker's JWT secret (matches backend)
 #   JWT_SIGNING_SECRET_PROD       — production Worker's JWT secret
@@ -86,7 +86,7 @@ jobs:
         if: steps.target.outputs.env == 'staging'
         uses: cloudflare/wrangler-action@v3
         with:
-          apiToken: ${{ secrets.IMAGES_API_TOKEN }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           # Pin wrangler v4 — the action defaults to v3, which lags behind
           # our local devDependency. Using the same major in CI and locally
@@ -102,7 +102,7 @@ jobs:
           echo -n "$JWT_SIGNING_SECRET" | npx wrangler secret put JWT_SIGNING_SECRET --env staging
           echo -n "$BACKEND_SHARED_SECRET" | npx wrangler secret put BACKEND_SHARED_SECRET --env staging
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.IMAGES_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           JWT_SIGNING_SECRET: ${{ secrets.JWT_SIGNING_SECRET_STAGING }}
           BACKEND_SHARED_SECRET: ${{ secrets.BACKEND_SHARED_SECRET_STAGING }}
@@ -113,7 +113,7 @@ jobs:
         if: steps.target.outputs.env == 'production'
         uses: cloudflare/wrangler-action@v3
         with:
-          apiToken: ${{ secrets.IMAGES_API_TOKEN }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           # Pin wrangler v4 — the action defaults to v3, which lags behind
           # our local devDependency. Using the same major in CI and locally
@@ -127,7 +127,7 @@ jobs:
           echo -n "$JWT_SIGNING_SECRET" | npx wrangler secret put JWT_SIGNING_SECRET --env production
           echo -n "$BACKEND_SHARED_SECRET" | npx wrangler secret put BACKEND_SHARED_SECRET --env production
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.IMAGES_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           JWT_SIGNING_SECRET: ${{ secrets.JWT_SIGNING_SECRET_PROD }}
           BACKEND_SHARED_SECRET: ${{ secrets.BACKEND_SHARED_SECRET_PROD }}
