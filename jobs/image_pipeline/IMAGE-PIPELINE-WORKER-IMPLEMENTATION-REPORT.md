@@ -1,6 +1,6 @@
 # Worker implementation handoff — `oglasino-image-worker`
 
-**Status:** Worker code, tests, and CI/CD complete. Two deploys triggered (main → production, dev → staging) but **not yet verified by me** — you/orchestrator should check Actions output and run smoke tests.
+**Status:** Worker code, tests, and CI/CD complete. Two deploys triggered (main → production, stage → stage) but **not yet verified by me** — you/orchestrator should check Actions output and run smoke tests.
 
 **Repo:** `https://github.com/memento-tech/oglasino-image-worker`
 **Local path:** `/Users/igorstojanovic/Desktop/projects/Oglasino/oglasino-image-worker`
@@ -76,14 +76,14 @@ Two environments, no "dev" environment.
 
 | Env        | Worker                    | Custom domain              | R2 bucket                 |
 | ---------- | ------------------------- | -------------------------- | ------------------------- |
-| staging    | `oglasino-images-staging` | `cdn-staging.oglasino.com` | `oglasino-images-staging` |
-| production | `oglasino-images`         | `cdn.oglasino.com`         | `oglasino-images-prod`    |
+| stage      | `oglasino-images-stage`   | `cdn-staging.oglasino.com` | `oglasino-images-stage`   |
+| production | `oglasino-images-prod`    | `cdn.oglasino.com`         | `oglasino-images-prod`    |
 
-Top-level `wrangler.toml` mirrors staging — `wrangler deploy` without `--env` never hits production.
+Top-level `wrangler.toml` mirrors stage — `wrangler deploy` without `--env` never hits production.
 
 ### Branch → environment mapping
 
-- `dev` → staging (auto-deploy via `.github/workflows/deploy.yml`)
+- `stage` → stage (auto-deploy via `.github/workflows/deploy.yml`)
 - `main` → production (auto-deploy)
 - Manual `workflow_dispatch` with environment selector also available
 
@@ -91,8 +91,8 @@ Top-level `wrangler.toml` mirrors staging — `wrangler deploy` without `--env` 
 
 - `CLOUDFLARE_API_TOKEN` — Cloudflare API token (Workers + R2 + Routes scopes)
 - `CLOUDFLARE_ACCOUNT_ID`
-- `JWT_SIGNING_SECRET_STAGING` / `JWT_SIGNING_SECRET_PROD`
-- `BACKEND_SHARED_SECRET_STAGING` / `BACKEND_SHARED_SECRET_PROD`
+- `JWT_SIGNING_SECRET_STAGE` / `JWT_SIGNING_SECRET_PROD`
+- `BACKEND_SHARED_SECRET_STAGE` / `BACKEND_SHARED_SECRET_PROD`
 
 The deploy workflow uses `cloudflare/wrangler-action@v3` `secrets:` input to push these to the Worker via `wrangler secret put` on every deploy. **Worker secrets are NOT pre-configured; they live as GH secrets and are pushed at deploy time.**
 
@@ -127,7 +127,7 @@ Run with `npm test`; lint with `npm run lint`.
 
 3. **Path traversal at the dispatch layer** — the WHATWG URL parser used by Workers normalizes `..`, `%2e%2e`, and `\` away before the Worker sees them. `validateKey` still rejects these inputs (defense-in-depth, covered by unit tests against the validator directly), but the realistic attack vector at the dispatch layer is forbidden characters (e.g. spaces becoming `%20`), which the validator rejects.
 
-4. **No PR for review** — user opted at the end to push directly to `main` and `dev` rather than do PR review.
+4. **No PR for review** — user opted at the end to push directly to `main` and `stage` rather than do PR review.
 
 5. **`worker.js` (legacy) deleted** — was never tracked in this repo's history.
 
@@ -137,7 +137,7 @@ Run with `npm test`; lint with `npm run lint`.
 
 - **Endpoints** are exactly the three listed above. PUT key matches JWT `key` claim **byte-for-byte** (contract §4.1 step 6); backend signs with the full key including prefix.
 - **JWT structure** matches §5.1 (upload) and §5.2 (view) exactly. `iss` MUST be `"oglasino-backend"`. Worker rejects others with `TOKEN_ISSUER_INVALID`.
-- **`JWT_SIGNING_SECRET` must be byte-identical between Worker and backend** for each environment. Provisioned via the GH Actions secret pair (`_STAGING`, `_PROD`); backend must use the matching value.
+- **`JWT_SIGNING_SECRET` must be byte-identical between Worker and backend** for each environment. Provisioned via the GH Actions secret pair (`_STAGE`, `_PROD`); backend must use the matching value.
 - **`maxBytes` claim** is per-token, capped by the Worker's `MAX_UPLOAD_BYTES` env (10 MB default). Backend can issue smaller per-scope limits.
 - **`x-request-id`** is echoed in every Worker response (header). Backend should capture it on outgoing Worker calls and put it in MDC alongside backend's own request id.
 
@@ -147,7 +147,7 @@ Run with `npm test`; lint with `npm run lint`.
 
 - **Public URLs:** `https://cdn.oglasino.com/{key}` (Image Resizing variants via `/cdn-cgi/image/...` work transparently; Worker doesn't see those requests).
 - **Private URLs:** `https://cdn.oglasino.com/{key}?token={view-jwt}`. Token is URL-safe base64 from `jose`; URL-encode if you're paranoid (single-call endpoints are fine without).
-- **CORS allowlist** is configured for `oglasino.com`, `www.oglasino.com`, `oglasino-web.vercel.app`, Vercel preview suffix `oglasino-web-*.vercel.app`, and `localhost:3000` / `localhost:3001` in staging only. Production strips localhost.
+- **CORS allowlist** is configured for `oglasino.com`, `www.oglasino.com`, `oglasino-web.vercel.app`, Vercel preview suffix `oglasino-web-*.vercel.app`, and `localhost:3000` / `localhost:3001` in stage only. Production strips localhost.
 - **Error responses** always have `{error: {code, message, details?, retryable}}` JSON. The `code` is stable; localize on it.
 
 ---
@@ -156,12 +156,12 @@ Run with `npm test`; lint with `npm run lint`.
 
 | Item                                           | Owner               | Notes                                                                                                                    |
 | ---------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Verify both deploys succeeded                  | orchestrator / Igor | Check `https://github.com/memento-tech/oglasino-image-worker/actions`. Both runs kicked off when main + dev were pushed. |
-| Run smoke tests against staging + prod         | orchestrator / Igor | Commands in README "Smoke-test after deploy". I did not execute these.                                                   |
+| Verify both deploys succeeded                  | orchestrator / Igor | Check `https://github.com/memento-tech/oglasino-image-worker/actions`. Both runs kicked off when main + stage were pushed. |
+| Run smoke tests against stage + prod           | orchestrator / Igor | Commands in README "Smoke-test after deploy". I did not execute these.                                                   |
 | Bind custom domains                            | Igor (already done) | `cdn-staging.oglasino.com` + `cdn.oglasino.com` per the WORKER_PROMPT update                                             |
 | Backend implementation (Track 1)               | backend agent       | Phase B in contract §17.2 — depends on this Worker being live                                                            |
 | Frontend implementation (Tracks 2-4)           | frontend agent      | Phase C in contract §17.3 — depends on backend                                                                           |
-| Cleanup branch `feat/initial-worker` on remote | optional            | Redundant; same commit as main + dev                                                                                     |
+| Cleanup branch `feat/initial-worker` on remote | optional            | Redundant; same commit as main + stage                                                                                   |
 
 ## What did NOT happen
 

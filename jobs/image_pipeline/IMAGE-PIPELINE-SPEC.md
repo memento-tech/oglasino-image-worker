@@ -415,7 +415,7 @@ The Worker is the contract between backend and frontend. Both consume it. Theref
 
 1. **Phase A** — Frontend agent and backend agent each produce their **required Worker contract** (what endpoints they need, what request/response shapes, what authentication, what error semantics). Outputs go into separate documents (`jobs/image_pipeline/IMAGE-PIPELINE-WORKER-NEEDS-FRONTEND.md` and `jobs/image_pipeline/IMAGE-PIPELINE-WORKER-NEEDS-BACKEND.md`). Igor reconciles into a unified Worker contract document.
 
-2. **Phase B** — Backend implements the new Worker per the agreed contract (Track 0). Worker is deployed to a staging route or development namespace.
+2. **Phase B** — Backend implements the new Worker per the agreed contract (Track 0). Worker is deployed to a stage route or development namespace.
 
 3. **Phase C** — Backend and frontend implement their respective changes against the new Worker. They proceed in parallel:
     - Backend: Track 1 (bucket reorganization, R2Service updates, image service path changes)
@@ -558,17 +558,17 @@ The implementation must:
     - `ALLOWED_CONTENT_TYPES` (comma-separated)
     - `BACKEND_SHARED_SECRET` (for backend-to-Worker auth)
     - `BUCKET_BINDING` (R2 binding name, configured in wrangler)
-    - `ENVIRONMENT` (production / development / staging)
+    - `ENVIRONMENT` (production / development / stage)
 - Include unit tests using Vitest (Cloudflare Workers test framework)
 - Include a `wrangler.toml` with all configuration documented
 - Include deployment instructions in a Worker-specific README
 
 ### Phase B: Worker deployment strategy
 
-1. Deploy new Worker to a staging route first (e.g., `images-staging.oglasino.com`)
-2. Backend can point to staging Worker via env override for testing
-3. Frontend can point to staging Worker via env override for testing
-4. End-to-end test against staging
+1. Deploy new Worker to a stage route first (e.g., `images-staging.oglasino.com`)
+2. Backend can point to stage Worker via env override for testing
+3. Frontend can point to stage Worker via env override for testing
+4. End-to-end test against stage
 5. Promote to production route only after both agents confirm working
 6. Old Worker code archived (kept in version control), can be reverted if needed
 
@@ -632,7 +632,7 @@ Configured in `wrangler.toml` and Cloudflare dashboard. Final list determined by
 | `MAX_UPLOAD_BYTES` | integer | Max upload size (default 10485760 = 10 MB) |
 | `ALLOWED_CONTENT_TYPES` | comma-separated string | Allowed mime types for uploads |
 | `BACKEND_SHARED_SECRET` | secret | Backend-to-Worker auth (configured as Worker secret, not plain env var) |
-| `ENVIRONMENT` | string | `production` / `staging` / `development` |
+| `ENVIRONMENT` | string | `production` / `stage` / `development` |
 | `BUCKET_BINDING` | binding | R2 bucket binding (configured in wrangler.toml) |
 
 ---
