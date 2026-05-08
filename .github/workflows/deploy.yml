@@ -1,6 +1,6 @@
 name: Deploy
 
-# Push to dev → staging deploy. Push to main → production deploy.
+# Push to stage → stage deploy. Push to main → production deploy.
 # Manual workflow_dispatch with environment selector also supported.
 #
 # Two-step deploy per environment:
@@ -17,14 +17,14 @@ name: Deploy
 # Required GitHub Actions repository secrets:
 #   CLOUDFLARE_API_TOKEN              — Cloudflare API token (Workers + R2 scopes)
 #   CLOUDFLARE_ACCOUNT_ID         — Cloudflare account ID
-#   JWT_SIGNING_SECRET_STAGING    — staging Worker's JWT secret (matches backend)
+#   JWT_SIGNING_SECRET_STAGE      — stage Worker's JWT secret (matches backend)
 #   JWT_SIGNING_SECRET_PROD       — production Worker's JWT secret
-#   BACKEND_SHARED_SECRET_STAGING — staging X-Backend-Auth secret
+#   BACKEND_SHARED_SECRET_STAGE   — stage X-Backend-Auth secret
 #   BACKEND_SHARED_SECRET_PROD    — production X-Backend-Auth secret
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main, stage]
   workflow_dispatch:
     inputs:
       environment:
@@ -32,11 +32,11 @@ on:
         required: true
         type: choice
         options:
-          - staging
+          - stage
           - production
 
 concurrency:
-  group: deploy-${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging') }}
+  group: deploy-${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'stage') }}
   cancel-in-progress: false
 
 jobs:
@@ -46,7 +46,7 @@ jobs:
     timeout-minutes: 10
 
     environment:
-      name: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging') }}
+      name: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'stage') }}
 
     steps:
       - uses: actions/checkout@v4
@@ -74,16 +74,16 @@ jobs:
           elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
             echo "env=production" >> "$GITHUB_OUTPUT"
           else
-            echo "env=staging" >> "$GITHUB_OUTPUT"
+            echo "env=stage" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Print wrangler version
         run: npx wrangler --version
 
-      # ---- STAGING ----------------------------------------------------------
+      # ---- STAGE ------------------------------------------------------------
 
-      - name: Deploy Worker code (staging)
-        if: steps.target.outputs.env == 'staging'
+      - name: Deploy Worker code (stage)
+        if: steps.target.outputs.env == 'stage'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -92,20 +92,20 @@ jobs:
           # our local devDependency. Using the same major in CI and locally
           # avoids surprises from v3/v4 wrangler.toml differences.
           wranglerVersion: "4"
-          command: deploy --env staging
+          command: deploy --env stage
 
-      - name: Push secrets (staging)
-        if: steps.target.outputs.env == 'staging'
+      - name: Push secrets (stage)
+        if: steps.target.outputs.env == 'stage'
         # `echo -n` avoids a trailing newline ending up in the secret value.
         # The local wrangler from `npm ci` is used (npx resolves to it).
         run: |
-          echo -n "$JWT_SIGNING_SECRET" | npx wrangler secret put JWT_SIGNING_SECRET --env staging
-          echo -n "$BACKEND_SHARED_SECRET" | npx wrangler secret put BACKEND_SHARED_SECRET --env staging
+          echo -n "$JWT_SIGNING_SECRET" | npx wrangler secret put JWT_SIGNING_SECRET --env stage
+          echo -n "$BACKEND_SHARED_SECRET" | npx wrangler secret put BACKEND_SHARED_SECRET --env stage
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          JWT_SIGNING_SECRET: ${{ secrets.JWT_SIGNING_SECRET_STAGING }}
-          BACKEND_SHARED_SECRET: ${{ secrets.BACKEND_SHARED_SECRET_STAGING }}
+          JWT_SIGNING_SECRET: ${{ secrets.JWT_SIGNING_SECRET_STAGE }}
+          BACKEND_SHARED_SECRET: ${{ secrets.BACKEND_SHARED_SECRET_STAGE }}
 
       # ---- PRODUCTION -------------------------------------------------------
 
