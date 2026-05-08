@@ -84,15 +84,15 @@ Target ≥80% coverage on `src/handlers/` and `src/auth/`.
 ## Deployment
 
 Two environments. **No "dev" environment** — local development runs via
-`wrangler dev` against local mocks, and pre-prod testing runs on staging.
+`wrangler dev` against local mocks, and pre-prod testing runs on stage.
 
 | Env | Worker name | Custom domain | R2 bucket |
 |---|---|---|---|
-| staging | `oglasino-images-staging` | `cdn-staging.oglasino.com` | `oglasino-images-staging` |
+| stage | `oglasino-images-staging` | `cdn-staging.oglasino.com` | `oglasino-images-staging` |
 | production | `oglasino-images` | `cdn.oglasino.com` | `oglasino-images-prod` |
 
-`wrangler deploy` with no `--env` flag deploys to **staging** (the top-level
-config in `wrangler.toml` mirrors the staging block). Production requires
+`wrangler deploy` with no `--env` flag deploys to **stage** (the top-level
+config in `wrangler.toml` mirrors the stage block). Production requires
 explicit `--env production` (or merging to `main`, which the deploy workflow
 handles).
 
@@ -109,18 +109,18 @@ handles).
 ### Deploy
 
 CI deploys automatically:
-- Push to `dev` branch → staging deploy
+- Push to `stage` branch → stage deploy
 - Push to `main` branch → production deploy
 - Manual `workflow_dispatch` with environment selector
 
 The deploy workflow (`.github/workflows/deploy.yml`):
 1. Runs lint + tests
 2. Pushes secrets to the target Worker via `wrangler secret put`
-3. Runs `wrangler deploy --env <staging|production>`
+3. Runs `wrangler deploy --env <stage|production>`
 
 Local deploy is also possible (use sparingly, prefer CI):
 ```
-npm run deploy:staging
+npm run deploy:stage
 npm run deploy:production
 ```
 For a local deploy you must already have the Worker secrets set on
@@ -133,9 +133,9 @@ Cloudflare (CI pushes them automatically; locally you'd run
 |---|---|
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API token (Workers Scripts:Edit + R2 Storage:Edit + Workers Routes:Edit) |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID |
-| `JWT_SIGNING_SECRET_STAGING` | HS256 secret for staging Worker (matches backend's staging secret) |
+| `JWT_SIGNING_SECRET_STAGE` | HS256 secret for stage Worker (matches backend's stage secret) |
 | `JWT_SIGNING_SECRET_PROD` | HS256 secret for production Worker |
-| `BACKEND_SHARED_SECRET_STAGING` | `X-Backend-Auth` value for staging |
+| `BACKEND_SHARED_SECRET_STAGE` | `X-Backend-Auth` value for stage |
 | `BACKEND_SHARED_SECRET_PROD` | `X-Backend-Auth` value for production |
 
 ### Smoke-test after deploy
@@ -179,7 +179,7 @@ the matching secret. The fastest path to verify this: deploy the backend
 pointing at the same Worker, ask it for an upload token, then PUT with that
 token. Don't smoke-test with hand-crafted JWTs unless you're debugging.
 
-After verifying, record the deployed staging URL in the PR description and
+After verifying, record the deployed stage URL in the PR description and
 in the team password manager alongside the secrets.
 
 ---
@@ -193,8 +193,8 @@ encrypted at rest; rotating means updating the GH secret and redeploying.
 
 | Worker secret | Purpose | Lives as GH secret |
 |---|---|---|
-| `JWT_SIGNING_SECRET` | HS256 verify for upload + view JWTs | `JWT_SIGNING_SECRET_STAGING`, `JWT_SIGNING_SECRET_PROD` |
-| `BACKEND_SHARED_SECRET` | `X-Backend-Auth` (no admin endpoints in v1, set anyway) | `BACKEND_SHARED_SECRET_STAGING`, `BACKEND_SHARED_SECRET_PROD` |
+| `JWT_SIGNING_SECRET` | HS256 verify for upload + view JWTs | `JWT_SIGNING_SECRET_STAGE`, `JWT_SIGNING_SECRET_PROD` |
+| `BACKEND_SHARED_SECRET` | `X-Backend-Auth` (no admin endpoints in v1, set anyway) | `BACKEND_SHARED_SECRET_STAGE`, `BACKEND_SHARED_SECRET_PROD` |
 | `JWT_SIGNING_SECRET_PREVIOUS` | Optional dual-key window during rotation | not configured yet — added on first rotation |
 
 ### Rotating `JWT_SIGNING_SECRET`

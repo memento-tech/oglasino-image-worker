@@ -1,33 +1,33 @@
 ENVIRONMENT MODEL
 
-Two environments only: staging and production.
-- Staging: cdn-staging.oglasino.com — used by developers AND for pre-prod testing
+Two environments only: stage and production.
+- Stage: cdn-staging.oglasino.com — used by developers AND for pre-prod testing
 - Production: cdn.oglasino.com — real users
-- No "dev" environment. Local development runs via `wrangler dev` against 
-  local mocks or staging.
+- No "dev" environment. Local development runs via `wrangler dev` against
+  local mocks or stage.
 
 R2 buckets:
-- oglasino-images-staging (for staging Worker)
+- oglasino-images-staging (for stage Worker)
 - oglasino-images-prod (for production Worker)
 
-Set up wrangler.toml with [env.staging] and [env.production] blocks. Default 
-environment (no [env.X]) maps to staging for safety — `wrangler deploy` 
+Set up wrangler.toml with [env.stage] and [env.production] blocks. Default
+environment (no [env.X]) maps to stage for safety — `wrangler deploy`
 without --env flag should never deploy to prod.
 
 GitHub Actions workflow:
-- Push to dev branch → deploy to staging (with staging secrets)
+- Push to stage branch → deploy to stage (with stage secrets)
 - Push to main branch → deploy to production (with prod secrets)
 - workflow_dispatch with env selector for manual deploys
 
-Workflow MUST inject secrets via wrangler secret put using GitHub Actions 
-secrets (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, JWT_SIGNING_SECRET_*, 
+Workflow MUST inject secrets via wrangler secret put using GitHub Actions
+secrets (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, JWT_SIGNING_SECRET_*,
 BACKEND_SHARED_SECRET_*). NOT committed to wrangler.toml.
 
 Custom domains for Worker routes:
-- Use Cloudflare dashboard → Workers & Pages → [worker] → Triggers → 
+- Use Cloudflare dashboard → Workers & Pages → [worker] → Triggers →
   Custom Domains
 - Add cdn.oglasino.com (production)
-- Add cdn-staging.oglasino.com (staging)
+- Add cdn-staging.oglasino.com (stage)
 - Cloudflare handles DNS automatically; no manual A/CNAME records needed
 
 Build the Cloudflare Worker for Oglasino's image pipeline from scratch.
@@ -59,7 +59,7 @@ This is a NEW repository, currently empty or near-empty. Set up:
    - What this is (one paragraph)
    - Local development (wrangler dev, env setup)
    - Testing (vitest commands)
-   - Deployment (staging + production routes)
+   - Deployment (stage + production routes)
    - Secrets management (which secrets, how to set, when to rotate)
    - Troubleshooting common issues
 5. Create wrangler.toml per contract §16.3
@@ -68,13 +68,13 @@ This is a NEW repository, currently empty or near-empty. Set up:
    - dev: wrangler dev
    - test: vitest run
    - test:watch: vitest
-   - deploy:staging: wrangler deploy --env staging
+   - deploy:stage: wrangler deploy --env stage
    - deploy:production: wrangler deploy --env production
    - lint: tsc --noEmit
 8. Set up GitHub Actions workflow:
    - .github/workflows/ci.yml — runs lint + tests on every PR and push
-   - .github/workflows/deploy.yml — deploys to staging on push to dev, 
-     production on push to main, manual workflow_dispatch with environment 
+   - .github/workflows/deploy.yml — deploys to stage on push to stage,
+     production on push to main, manual workflow_dispatch with environment
      selection
 
 Show me the initial structure before writing handler code.
@@ -163,20 +163,20 @@ PHASE 4 — Deployment
 2. Set secrets via `wrangler secret put`:
    - JWT_SIGNING_SECRET (generate via openssl rand -base64 32)
    - BACKEND_SHARED_SECRET (generate via openssl rand -base64 32)
-3. Deploy to staging route (suggest cdn-staging.oglasino.com or use 
+3. Deploy to stage route (suggest cdn-staging.oglasino.com or use
    Cloudflare's preview URL)
 4. Verify deployed Worker responds:
    - GET /public/test → 404 OBJECT_NOT_FOUND
    - GET /private/chats/abc/xyz?token=invalid → 401
    - Curl with no token → 400 TOKEN_MISSING
-5. Document the staging URL in README and in this PR description
+5. Document the stage URL in README and in this PR description
 6. Save secrets to password manager (Igor manages)
 
 DELIVERABLE
 
 After all phases:
 - Repo structure complete with all source, tests, config
-- Worker deployed to staging
+- Worker deployed to stage
 - README documents deployment, secrets, local dev, testing
 - All tests passing
 - TypeScript strict, no errors

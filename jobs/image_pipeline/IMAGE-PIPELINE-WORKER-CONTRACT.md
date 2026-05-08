@@ -847,7 +847,7 @@ Set via `wrangler secret put` (secrets) or `wrangler.toml` `[vars]` (non-secrets
 | `MAX_UPLOAD_BYTES` | var | `10485760` | 10 MB hard cap |
 | `UPLOAD_TOKEN_TTL_MS` | var | `600000` | 10 min (informational; backend sets actual exp) |
 | `VIEW_TOKEN_TTL_MS` | var | `14400000` | 4 hours (informational) |
-| `ENVIRONMENT` | var | `production` / `staging` / `development` | Gates dev-only CORS origins |
+| `ENVIRONMENT` | var | `production` / `stage` / `development` | Gates dev-only CORS origins |
 | `BUCKET` | binding | (R2 binding name) | Configured in wrangler.toml |
 
 ### 12.2 Backend application properties
@@ -1100,7 +1100,7 @@ bucket_name = "oglasino-images-prod"
 
 # Routes configured in Cloudflare dashboard:
 # - cdn.oglasino.com/* (production)
-# - cdn.staging.oglasino.com/* (staging, if added)
+# - cdn.stage.oglasino.com/* (stage, if added)
 
 # Secrets (set via `wrangler secret put`):
 # - JWT_SIGNING_SECRET
@@ -1111,9 +1111,9 @@ bucket_name = "oglasino-images-prod"
 ### 16.4 Deployment
 
 - Worker deployed via `wrangler deploy`
-- Two routes: production at `cdn.oglasino.com/*`, staging at `cdn.staging.oglasino.com/*` (or Cloudflare's preview URL)
-- Promotion: deploy to staging first, verify, then deploy to production
-- CI: GitHub Actions on `oglasino-worker` repo, deploys to staging on push to `dev`, to production on push to `main`
+- Two routes: production at `cdn.oglasino.com/*`, stage at `cdn.stage.oglasino.com/*` (or Cloudflare's preview URL)
+- Promotion: deploy to stage first, verify, then deploy to production
+- CI: GitHub Actions on `oglasino-worker` repo, deploys to stage on push to `stage`, to production on push to `main`
 
 ### 16.5 Local development
 
@@ -1130,10 +1130,10 @@ Single PR in `oglasino-worker` repo:
 1. Set up `oglasino-worker` repo with skeleton
 2. Implement Worker per §4, §5, §8, §9, §10
 3. Vitest tests for each handler
-4. Deploy to staging route
-5. Manual smoke test against staging from local dev backend
+4. Deploy to stage route
+5. Manual smoke test against stage from local dev backend
 
-Deliverable: Worker live on staging, ready for backend to point to.
+Deliverable: Worker live on stage, ready for backend to point to.
 
 ### 17.2 Phase B — Backend (backend agent, in `oglasino-backend` repo)
 
@@ -1154,7 +1154,7 @@ Single PR on branch `feature/image-pipeline-v2`:
 13. Tests (unit + integration)
 14. Deploy to dev environment
 
-Deliverable: Backend deployed to dev, signing valid JWTs the staging Worker accepts.
+Deliverable: Backend deployed to dev, signing valid JWTs the stage Worker accepts.
 
 ### 17.3 Phase C — Frontend (frontend agent, in `oglasino-web` repo)
 
