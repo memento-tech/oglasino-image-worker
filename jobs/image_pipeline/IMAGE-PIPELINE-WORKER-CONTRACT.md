@@ -1082,7 +1082,7 @@ oglasino-worker/
 ### 16.3 wrangler.toml outline
 
 ```toml
-name = "oglasino-images"
+name = "oglasino-images-prod"
 main = "src/index.ts"
 compatibility_date = "2026-05-01"
 
@@ -1152,9 +1152,9 @@ Single PR on branch `feature/image-pipeline-v2`:
 11. Fix defect #2 (`DefaultUserFacade` — invert equals check, drop IMAGE_DOMAIN gate)
 12. Remove old endpoints (`/direct-upload`, `/direct-upload-batch`, `/view-token`) and old `DefaultImageService` Worker calls
 13. Tests (unit + integration)
-14. Deploy to dev environment
+14. Deploy to stage environment
 
-Deliverable: Backend deployed to dev, signing valid JWTs the stage Worker accepts.
+Deliverable: Backend deployed to stage, signing valid JWTs the stage Worker accepts.
 
 ### 17.3 Phase C — Frontend (frontend agent, in `oglasino-web` repo)
 

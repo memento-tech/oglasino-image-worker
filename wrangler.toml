@@ -12,7 +12,7 @@
 # `wrangler secret put`. They are NEVER stored here. For local `wrangler
 # dev`, place them in `.dev.vars` (gitignored).
 
-name = "oglasino-images-staging"
+name = "oglasino-images-stage"
 main = "src/index.ts"
 compatibility_date = "2025-09-06"
 compatibility_flags = ["nodejs_compat"]
@@ -27,7 +27,7 @@ ENVIRONMENT = "stage"
 
 [[r2_buckets]]
 binding = "BUCKET"
-bucket_name = "oglasino-images-staging"
+bucket_name = "oglasino-images-stage"
 
 # ---------------------------------------------------------------------------
 # Stage — explicit, identical to default. Allows `wrangler deploy --env
@@ -37,7 +37,7 @@ bucket_name = "oglasino-images-staging"
 # ---------------------------------------------------------------------------
 
 [env.stage]
-name = "oglasino-images-staging"
+name = "oglasino-images-stage"
 
 [env.stage.vars]
 ALLOWED_ORIGINS = "https://oglasino.com,https://www.oglasino.com,https://oglasino-web.vercel.app,http://localhost:3000,http://localhost:3001"
@@ -49,14 +49,14 @@ ENVIRONMENT = "stage"
 
 [[env.stage.r2_buckets]]
 binding = "BUCKET"
-bucket_name = "oglasino-images-staging"
+bucket_name = "oglasino-images-stage"
 
 # ---------------------------------------------------------------------------
 # Production — tighter CORS (no localhost), production R2 bucket.
 # ---------------------------------------------------------------------------
 
 [env.production]
-name = "oglasino-images"
+name = "oglasino-images-prod"
 
 [env.production.vars]
 ALLOWED_ORIGINS = "https://oglasino.com,https://www.oglasino.com,https://oglasino-web.vercel.app"

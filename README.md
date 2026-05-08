@@ -88,8 +88,8 @@ Two environments. **No "dev" environment** — local development runs via
 
 | Env | Worker name | Custom domain | R2 bucket |
 |---|---|---|---|
-| stage | `oglasino-images-staging` | `cdn-staging.oglasino.com` | `oglasino-images-staging` |
-| production | `oglasino-images` | `cdn.oglasino.com` | `oglasino-images-prod` |
+| stage | `oglasino-images-stage` | `cdn-staging.oglasino.com` | `oglasino-images-stage` |
+| production | `oglasino-images-prod` | `cdn.oglasino.com` | `oglasino-images-prod` |
 
 `wrangler deploy` with no `--env` flag deploys to **stage** (the top-level
 config in `wrangler.toml` mirrors the stage block). Production requires

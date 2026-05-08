@@ -76,8 +76,8 @@ Two environments, no "dev" environment.
 
 | Env        | Worker                    | Custom domain              | R2 bucket                 |
 | ---------- | ------------------------- | -------------------------- | ------------------------- |
-| stage      | `oglasino-images-staging` | `cdn-staging.oglasino.com` | `oglasino-images-staging` |
-| production | `oglasino-images`         | `cdn.oglasino.com`         | `oglasino-images-prod`    |
+| stage      | `oglasino-images-stage`   | `cdn-staging.oglasino.com` | `oglasino-images-stage`   |
+| production | `oglasino-images-prod`    | `cdn.oglasino.com`         | `oglasino-images-prod`    |
 
 Top-level `wrangler.toml` mirrors stage — `wrangler deploy` without `--env` never hits production.
 
