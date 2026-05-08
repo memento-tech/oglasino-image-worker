@@ -127,8 +127,8 @@ The Worker is the only component that adds a prefix on upload.
 
 | Property | Source | Used by | Value example |
 |---|---|---|---|
-| `cloudflare.worker.url` | env `CLOUDFLARE_WORKER_URL` (set in `.env`) | `DefaultImageService:30` (Worker base for token POST) | `https://cdn.dev.oglasino.com/` |
-| `cloudflare.worker.domain` | env `CLOUDFLARE_WORKER_DOMAIN` | `DefaultUserFacade:34` (substring check on stored profile image) | `cdn.dev.oglasino` |
+| `cloudflare.worker.url` | env `CLOUDFLARE_WORKER_URL` (set in `.env`) | `DefaultImageService:30` (Worker base for token POST) | `https://cdn-stage.oglasino.com/` |
+| `cloudflare.worker.domain` | env `CLOUDFLARE_WORKER_DOMAIN` | `DefaultUserFacade:34` (substring check on stored profile image) | `cdn-stage.oglasino` |
 | `cloudflare.account.id` | env `CLOUDFLARE_ACC_ID` | `DefaultImageService:25` (composes `/api/{acct-id}/...`) | a 32-char hex |
 | `cloudflare.api.token` | env `CLOUDFLARE_API_TOKEN` | `DefaultImageService:28` (Bearer auth to Worker, named `TOKEN_ID` locally) | a Cloudflare API token |
 

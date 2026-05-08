@@ -11,7 +11,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "lint": "tsc --noEmit",
-    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:stage": "wrangler deploy --env stage",
     "deploy:production": "wrangler deploy --env production"
   },
   "dependencies": {
