@@ -1,6 +1,6 @@
 {
   "name": "oglasino-image-worker",
-  "version": "0.1.0",
+  "version": "1",
   "private": true,
   "description": "Cloudflare Worker that gates image PUT/GET against R2 for Oglasino's image pipeline.",
   "type": "module",
